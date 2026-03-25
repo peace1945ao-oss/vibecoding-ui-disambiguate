@@ -1,0 +1,62 @@
+# ビジュアルUI曖昧解消ワークフロー（Google Antigravity用）
+
+## セットアップ
+このファイルを `.agent/workflows/ui-disambiguate.md` としてプロジェクトに配置してください。
+
+---
+
+```yaml
+---
+Name: UI Disambiguate
+Description: 曖昧なUI表現から候補を検索し、実際のサイト画面に色枠を表示して確認するワークフロー
+SafeToAutoRun: true
+---
+```
+
+## トリガー条件
+以下の表現がユーザーから来たとき自動的にこのワークフローを開始する：
+- 「上の〇〇」「下の〇〇」「右の〇〇」「左の〇〇」
+- 「大きい画像」「バナー」「ポップアップ」「メニュー」など用語が曖昧
+- 「あそこ」「ここ」「それ」などの指示語
+- UIのパーツ名が確定していないまま「変えて」「直して」と言われたとき
+
+## ワークフロー手順
+
+### STEP 1: 候補を検索してオーバーレイJSを生成
+// turbo
+```
+node ui-disambiguate.mjs "ユーザーの発言をそのまま入れる"
+```
+出力された候補リストとオーバーレイJSを記録する。
+
+### STEP 2: Browser Sub-AgentでオーバーレイJSを実行
+Browser Sub-Agentに以下を指示する：
+```
+STEP 1で生成されたオーバーレイJSをプレビューページで実行してください。
+その後スクリーンショットを撮影してArtifactとして保存してください。
+```
+
+### STEP 3: ユーザーに確認
+Artifactのスクリーンショットをユーザーに見せて確認を取る：
+```
+[A] 〇〇（説明）
+[B] 〇〇（説明）
+[C] 〇〇（説明）
+
+どれのことですか？
+```
+
+### STEP 4: オーバーレイを削除
+// turbo
+Browser Sub-Agentに以下を指示する：
+```
+document.querySelectorAll('.__ui-disambiguate').forEach(el => el.remove());
+```
+
+### STEP 5: 確定した用語で作業を続ける
+ユーザーが選んだ用語を使って実装を進める。
+
+## 注意事項
+- 候補が1つに絞れた場合も「〇〇のことですか？」と一度確認する
+- 候補が見つからない場合はBrowser Sub-Agentにスクリーンショットを撮らせ「どのエリアか教えてください」と聞く
+- JavaScript Execution Policy が "Always Proceed" になっていることを確認する

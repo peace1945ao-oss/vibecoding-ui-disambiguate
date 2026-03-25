@@ -4,6 +4,8 @@
 
 ![デモ](ui-disambiguate-demo.gif)
 
+**Claude Code・Google Antigravity の両方に対応**
+
 ---
 
 ## これは何？
@@ -36,6 +38,37 @@ AIにWebサイトを作ってもらうとき、こんな指示をしていませ
 
 ---
 
+## 構成
+
+```
+vibecoding-ui-disambiguate/
+├── ui-disambiguate.mjs   # コアスクリプト（共通）
+├── CLAUDE.md.example     # Claude Code 用の組み込み方
+├── AGENT.md.example      # Google Antigravity 用の組み込み方
+├── ui-disambiguate-demo.gif
+└── README.md
+```
+
+スクリプト本体は**どのツールでも共通**です。
+AIへの指示ファイルだけ、使うツールに合わせてコピーします。
+
+---
+
+## セットアップ
+
+### Claude Code の場合
+
+1. `ui-disambiguate.mjs` をプロジェクトの `scripts/` に配置
+2. `CLAUDE.md.example` の内容をプロジェクトの `CLAUDE.md` にコピー
+
+### Google Antigravity の場合
+
+1. `ui-disambiguate.mjs` をプロジェクトルートに配置
+2. `AGENT.md.example` を `.agent/workflows/ui-disambiguate.md` としてコピー
+3. Antigravity の JavaScript Execution Policy を "Always Proceed" に設定
+
+---
+
 ## 使い方
 
 ### 1. 候補を検索してオーバーレイJSを生成
@@ -52,18 +85,21 @@ node ui-disambiguate.mjs "上の画像のところ"
   [B] ナビゲーションバー — サイト全体のリンクが並ぶナビゲーション
   [C] ヘッダー — ページ最上部のナビゲーションエリア
 
-📌 【STEP 1】 preview_eval に貼るJS（オーバーレイ表示）:
+📌 【STEP 1】 ページに注入するJS（オーバーレイ表示）:
 ...（JSコード）...
 ```
 
-### 2. Claude Code の preview_eval に貼る
+### 2. 注入方法（ツール別）
 
-出力されたJSを `preview_eval` で実行すると、サイト画面に色枠が表示されます。
+| ツール | 注入方法 |
+|---|---|
+| Claude Code | `preview_eval` に出力JSを貼る |
+| Antigravity | Browser Sub-Agent に実行を指示 |
 
 ### 3. スクリーンショットを撮ってユーザーに確認
 
 ```
-preview_screenshot → 「[A]・[B]・[C]のどれですか？」
+「[A]・[B]・[C]のどれですか？」
 ```
 
 ### 4. 選んでもらったら確定して作業を続ける
@@ -87,23 +123,6 @@ preview_screenshot → 「[A]・[B]・[C]のどれですか？」
 | 開閉するやつ | アコーディオン |
 | 入力欄 | フォーム |
 | かたまり | セクション |
-
----
-
-## Claude Code への組み込み方
-
-`CLAUDE.md` に以下を追記するだけです：
-
-```markdown
-## ビジュアルUI曖昧解消ワークフロー
-
-ユーザーが曖昧な表現でUIの場所を指示したとき：
-1. `node ui-disambiguate.mjs "ユーザーの発言"` を実行
-2. 出力されたJSを preview_eval で実行
-3. preview_screenshot でスクリーンショット撮影
-4. 「[A]・[B]のどれですか？」と確認
-5. 確定した用語で作業を続ける
-```
 
 ---
 
